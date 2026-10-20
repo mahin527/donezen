@@ -3,4 +3,9 @@
 3. Refresh Token
 4. How to manage multiple sessions
 5. Token Blacklisting
-6.
+
+#### nodemailer doc:
+
+```
+https://github.com/ankurdotio/Difference-Backend-video/tree/main/026-nodemailer
+```
