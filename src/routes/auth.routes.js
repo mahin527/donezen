@@ -3,6 +3,7 @@ import {
     getMe,
     register,
     login,
+    verifyEmail,
     refreshToken,
     logout,
     logoutAll,
@@ -11,6 +12,7 @@ import {
 const authRouter = Router();
 
 authRouter.post("/register", register);
+authRouter.post("/verify-email", verifyEmail);
 authRouter.post("/login", login);
 authRouter.get("/logout", logout);
 authRouter.get("/logout-all", logoutAll);

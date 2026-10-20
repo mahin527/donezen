@@ -4,6 +4,9 @@ import { sessionModel } from "../models/session.model.js";
 import crypto from "crypto";
 import jwt from "jsonwebtoken";
 import { conf } from "../config/config.js";
+import { sendEmail } from "../services/email.service.js";
+import { generateOtp, getOtpHtml } from "../utils/utils.js";
+import { otpModel } from "../models/otp.model.js";
 
 export async function register(req, res) {
     const { username, email, password } = req.body;
@@ -35,55 +38,29 @@ export async function register(req, res) {
             password: hashedPassword,
         });
 
-        const refreshToken = jwt.sign(
-            {
-                id: user._id,
-            },
-            conf.jwt_secret,
-            {
-                expiresIn: "7d",
-            },
-        );
+        const otp = generateOtp();
+        const otpHtml = getOtpHtml(otp);
 
-        const refreshTokenHash = crypto
-            .createHash("sha256")
-            .update(refreshToken)
-            .digest("hex");
-
-        const session = await sessionModel.create({
+        const otpHash = crypto.createHash("sha256").update(otp).digest("hex");
+        await otpModel.create({
+            email,
             user: user._id,
-            refreshTokenHash,
-            ip: req.ip,
-            userAgent: req.headers["user-agent"],
+            otpHash,
         });
 
-        const accessToken = jwt.sign(
-            {
-                id: user._id,
-                sessionId: session._id,
-            },
-            conf.jwt_secret,
-            {
-                expiresIn: "15m",
-            },
+        await sendEmail(
+            email,
+            "OTP Verification",
+            `Your OTP code is ${otp}`,
+            otpHtml,
         );
-
-        res.cookie("refreshToken", refreshToken, {
-            httpOnly: true,
-            secure: true,
-            sameSite: "strict",
-            maxAge: 7 * 24 * 60 * 60 * 1000, // 7days
-        });
 
         res.status(201).json({
             message: "user registered successfully",
             user: {
                 username: user.username,
                 email: user.email,
-            },
-            token: {
-                accessToken,
-                refreshToken,
+                verified: user.verified,
             },
         });
     } catch (error) {
@@ -160,6 +137,12 @@ export async function login(req, res) {
     if (!user) {
         return res.status(401).json({
             message: "invalid credentials",
+        });
+    }
+
+    if (!user.verified) {
+        return res.status(401).json({
+            message: "your email is not verified",
         });
     }
 
@@ -310,5 +293,39 @@ export async function refreshToken(req, res) {
     res.status(200).json({
         message: "access token refreshed successfully",
         accessToken,
+    });
+}
+
+export async function verifyEmail(req, res) {
+    const { email, otp } = req.body;
+    const otpHash = crypto.createHash("sha256").update(otp).digest("hex");
+    const otpDoc = await otpModel.findOne({
+        email,
+        otpHash,
+    });
+
+    if (!otpDoc) {
+        return res.status(400).json({
+            message: "invalid otp",
+        });
+    }
+
+    const user = await userModel.findOneAndUpdate(
+        { _id: otpDoc.user },
+        { verified: true },
+        { new: true },
+    );
+
+    await otpModel.deleteMany({
+        user: otpDoc.user,
+    });
+
+    return res.status(200).json({
+        message: "Email verified successfully",
+        user: {
+            username: user.username,
+            email: user.email,
+            verified: user.verified,
+        },
     });
 }

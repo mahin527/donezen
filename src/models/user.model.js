@@ -15,6 +15,10 @@ const userSchema = new mongoose.Schema({
         type: String,
         required: [true, "password is required"],
     },
+    verified: {
+        type: Boolean,
+        default: false,
+    },
 });
 
 export const userModel = mongoose.model("User", userSchema);
