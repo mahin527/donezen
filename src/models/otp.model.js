@@ -29,4 +29,7 @@ otpSchema.methods.compareOtp = function (candidateOtp) {
     return compare(candidateOtp, this.otp);
 };
 
+// Auto-expire otp documents 10 minutes after creation
+otpSchema.index({ createdAt: 1 }, { expireAfterSeconds: 600 });
+
 export const otpModel = mongoose.model("Otp", otpSchema);
