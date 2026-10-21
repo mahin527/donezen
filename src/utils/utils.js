@@ -1,7 +1,17 @@
+import crypto from "crypto";
+import { conf } from "../config/config.js";
+
 export function generateOtp() {
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     console.log(otp);
     return otp;
+}
+
+export function hashToken(token) {
+    return crypto
+        .createHmac("sha256", conf.jwt_secret)
+        .update(token)
+        .digest("hex");
 }
 
 export function getOtpHtml(otp) {

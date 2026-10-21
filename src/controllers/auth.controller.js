@@ -5,7 +5,7 @@ import crypto from "crypto";
 import jwt from "jsonwebtoken";
 import { conf } from "../config/config.js";
 import { sendEmail } from "../services/email.service.js";
-import { generateOtp, getOtpHtml } from "../utils/utils.js";
+import { generateOtp, getOtpHtml, hashToken } from "../utils/utils.js";
 import { otpModel } from "../models/otp.model.js";
 
 export async function register(req, res) {
@@ -74,10 +74,7 @@ export async function logout(req, res) {
         });
     }
 
-    const refreshTokenHash = crypto
-        .createHash("sha256")
-        .update(refreshToken)
-        .digest("hex");
+    const refreshTokenHash = hashToken(refreshToken);
 
     const session = await sessionModel.findOne({
         refreshTokenHash,
@@ -159,10 +156,7 @@ export async function login(req, res) {
         },
     );
 
-    const refreshTokenHash = crypto
-        .createHash("sha256")
-        .update(refreshToken)
-        .digest("hex");
+    const refreshTokenHash = hashToken(refreshToken);
 
     const session = await sessionModel.create({
         user: user._id,
@@ -230,10 +224,7 @@ export async function refreshToken(req, res) {
 
     const decoded = jwt.verify(refreshToken, conf.jwt_secret);
 
-    const refreshTokenHash = crypto
-        .createHash("sha256")
-        .update(refreshToken)
-        .digest("hex");
+    const refreshTokenHash = hashToken(refreshToken);
 
     const session = await sessionModel.findOne({
         refreshTokenHash,
@@ -266,10 +257,7 @@ export async function refreshToken(req, res) {
         },
     );
 
-    const NewRefreshTokenHash = crypto
-        .createHash("sha256")
-        .update(NewRefreshToken)
-        .digest("hex");
+    const NewRefreshTokenHash = hashToken(NewRefreshToken);
 
     session.refreshTokenHash = NewRefreshTokenHash;
     await session.save();
