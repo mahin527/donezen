@@ -7,7 +7,7 @@ export function generateOtp() {
 
 export function hashToken(token) {
     return crypto
-        .createHmac("sha256", conf.jwt_secret)
+        .createHmac("sha256", conf.token_secret)
         .update(token)
         .digest("hex");
 }

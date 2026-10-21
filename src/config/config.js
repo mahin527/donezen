@@ -7,11 +7,16 @@ if (!p.JWT_SECRET) {
     throw new Error("jwt secret is not defined in env");
 }
 
+if (!p.TOKEN_SECRET) {
+    throw new Error("token secret is not defined in env");
+}
+
 // TODO: Error habdling for all env values
 
 export const conf = {
     db_url: p.MONGODB_URI,
     jwt_secret: p.JWT_SECRET,
+    token_secret: p.TOKEN_SECRET,
     google_client_id: p.GOOGLE_CLIENT_ID,
     google_client_secret: p.GOOGLE_CLIENT_SECRET,
     google_refresh_token: p.GOOGLE_REFRESH_TOKEN,
