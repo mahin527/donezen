@@ -2,9 +2,7 @@ import crypto from "crypto";
 import { conf } from "../config/config.js";
 
 export function generateOtp() {
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    console.log(otp);
-    return otp;
+    return crypto.randomInt(100000, 1000000).toString();
 }
 
 export function hashToken(token) {
