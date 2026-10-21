@@ -1,7 +1,6 @@
 import { userModel } from "../models/user.model.js";
 import { sessionModel } from "../models/session.model.js";
 
-import crypto from "crypto";
 import jwt from "jsonwebtoken";
 import { conf } from "../config/config.js";
 import { sendEmail } from "../services/email.service.js";
@@ -36,11 +35,10 @@ export async function register(req, res) {
         const otp = generateOtp();
         const otpHtml = getOtpHtml(otp);
 
-        const otpHash = crypto.createHash("sha256").update(otp).digest("hex");
         await otpModel.create({
             email,
             user: user._id,
-            otpHash,
+            otp,
         });
 
         await sendEmail(
@@ -277,13 +275,9 @@ export async function refreshToken(req, res) {
 
 export async function verifyEmail(req, res) {
     const { email, otp } = req.body;
-    const otpHash = crypto.createHash("sha256").update(otp).digest("hex");
-    const otpDoc = await otpModel.findOne({
-        email,
-        otpHash,
-    });
+    const otpDoc = await otpModel.findOne({ email }).sort({ createdAt: -1 });
 
-    if (!otpDoc) {
+    if (!otpDoc || !(await otpDoc.compareOtp(otp))) {
         return res.status(400).json({
             message: "invalid otp",
         });
