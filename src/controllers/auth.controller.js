@@ -27,15 +27,10 @@ export async function register(req, res) {
             return;
         }
 
-        const hashedPassword = crypto
-            .createHash("sha256")
-            .update(password)
-            .digest("hex");
-
         const user = await userModel.create({
             username,
             email,
-            password: hashedPassword,
+            password,
         });
 
         const otp = generateOtp();
@@ -146,11 +141,7 @@ export async function login(req, res) {
         });
     }
 
-    const hashedpassword = crypto
-        .createHash("sha256")
-        .update(password)
-        .digest("hex");
-    const isPasswordValid = hashedpassword === user.password;
+    const isPasswordValid = await user.comparePassword(password);
 
     if (!isPasswordValid) {
         return res.status(401).json({
